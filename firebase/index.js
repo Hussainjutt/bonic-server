@@ -1,0 +1,21 @@
+import admin from "firebase-admin";
+
+export const storage = admin.initializeApp({
+  credential: admin.credential.cert({
+    type: "service_account",
+    project_id: "e-commerce-b877d",
+    private_key_id: "e20fad401e59c81d55779f26aff2a0c9bf94e961",
+    private_key:
+      "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCfDtOeT0ohl1ha\nRwdcQ5IK/IQeN4VoS69iyBpEGfdBcVmdTGeLehO1hpJn6UzoTRzIU7ZAPGsQVUe9\n+voi7ytdSLykXuF3u2Td1nU+8/PW1cwIMD50/DPO2/kyCRfHw/Lb98HcWFl6mcOR\n1aNrAWeczK0VR02GJS9piYCCbBtXuVsxFtCJ1S0lzryol/k6li1n2/IYMlX890ks\ncW6DxVF59SRuN4iTgoP1wOuWp2qsZL6c45r/tZKaOSPS/3tXXX+J+1sPNTolAuCb\nX+BtEDhqNiBbLEFfxL3ednBgUqlXcbemc9a+1BMcZFF3mNXI0kszRh+MY6OSFgQh\nbMt70uSXAgMBAAECggEAHrjb6heRj4Ruld1jUBBjHIkisb1yoK8BvNg+rom/Zt4Q\ne5/+3gNh3C2WiMiYyMPgO9dje+vPmDOIrGrWNrowi4+ZlDwZW6mP9YNPWS4Amq3n\n/2rmHW17SkjVzLLR641vEsq7oKZV/ibGDhyQOIJoc3JbOiFwGWmES2O6NTbRXzOJ\nottm4hdHYQ8k1Nir7uHMCFw57H8QDdBrNbbXhvnlTEt2yoqIACkHzG7diRB+kbOn\nbPiFIeZkbmka3TMkhwsp0GSZac4m9vYnWFrgjTY1j+aoc8Wxbj2JE4DMRYRyM1x1\nIXjbLmR9GGsm5YF2mHs3751jOg9qsV2INfgsV5MP2QKBgQDSaCkfxwm/rzRqwXHw\nBraCuAihi7ToLDbTNgHNSIFwyDrwOEkDd8fPkXDII6BVetA6RL/Ifhf0+RlpbuXG\n1BqD4M3v2mEquSqnMveUSvs9ZDKAFzLSYEdOjP2MINv9KyI6tg9PF2dzxwFvuIIU\n27dWWiDeAYWcozo0komUzHD9HwKBgQDBhjM21+JxTx2nayCkBeagGLreZHKT+D0m\nERb0Z5OX7Q7ZErSzLw/6aBTX9169N5otT0XjBT2BtGLaywnI2pff1QOE+7Sgmpv2\nQVx/s5CkYi25b2bJ1WAF+6f01cAmhPo+8fM+l2IyiFrQ/O91CdOW0ncYCN4INib6\n8As9Z4exiQKBgQCy4GK15VzgXW9Oow7eZJadIyATVtaB27TwcyWtBEsnOtMAjplk\nHVz9lkQvojoY8cQ9BV2WcbykQ3HbNLCcDI5ON7xcgWfCDpG4e5gHtodJdfmI9C/8\nsmVs3mhfzT+5SAZdq5HwR5Fn2HPcKxxL509CVnVCyEBzHkHJmBrnKbeVOQKBgQC5\njqrWoENwb/K4D6D5hOrwgSXUja3LMY+4S1SePh4n41aET0pSMQL6EAhEV91QQtsj\nLMqO9fxWvJa4wUv9eZN8PGwme45jHDwE8AD4NT2wUK8VCbseNejfc8BEoxueE407\nA5U/Y7n1SAcEMjKMH0Lxb5ZfxkjWyM2xeK7eTsGuOQKBgBkNcdFGJItosWbc7lod\n2kPdfRGlerJaK2nLcY95WYUpj1LsK6O322mowTVtd9EMn3vlEC+HBk5SpC37j/vK\nrHwNsUOw5vKGCVpstYzPJNaY2eGPcyQSZEByjDT0CCqDAbOJNMdDVkQnJ3JPucX0\nDUGnpenDaifjqhq+WwAy07Na\n-----END PRIVATE KEY-----\n",
+    client_email:
+      "firebase-adminsdk-o9l92@e-commerce-b877d.iam.gserviceaccount.com",
+    client_id: "115076453322511904362",
+    auth_uri: "https://accounts.google.com/o/oauth2/auth",
+    token_uri: "https://oauth2.googleapis.com/token",
+    auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+    client_x509_cert_url:
+      "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-o9l92%40e-commerce-b877d.iam.gserviceaccount.com",
+    universe_domain: "googleapis.com",
+  }),
+  storageBucket: "gs://e-commerce-b877d.appspot.com",
+});
