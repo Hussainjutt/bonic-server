@@ -37,3 +37,5 @@ app.use("/api/v1", categoryRoutes);
 app.use("/api/v1", usersRoutes);
 app.use("/api/v1", productsRoutes);
 app.use("/api", Test);
+
+module.exports = app;
