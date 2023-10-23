@@ -8,7 +8,6 @@ import usersRoutes from "./routes/usersRoutes.js";
 import productsRoutes from "./routes/productRoutes.js";
 import cors from "cors";
 import bodyParser from "body-parser";
-import Test from "./routes/test.js";
 dotenv.config();
 //DB connections
 connectDB();
@@ -36,6 +35,3 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1", categoryRoutes);
 app.use("/api/v1", usersRoutes);
 app.use("/api/v1", productsRoutes);
-app.use("/api", Test);
-
-module.exports = app;
