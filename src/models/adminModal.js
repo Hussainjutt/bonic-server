@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema(
+const AdminModal = new mongoose.Schema(
   {
     first_name: {
       type: String,
@@ -36,15 +36,22 @@ const userSchema = new mongoose.Schema(
       type: String,
       require: true,
     },
-    profile_pic: {
-      type: String,
-    },
     verified: {
       type: Boolean,
       require: true,
+    },
+    token: {
+      type: String,
+      require: true,
+    },
+    confirmation_pin: {
+      type: String,
+    },
+    remember_me: {
+      type: Boolean,
     },
   },
   { timestamps: true }
 );
 
-export default mongoose.model("users", userSchema);
+export default mongoose.model("admin-auths", AdminModal);

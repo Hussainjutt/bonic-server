@@ -2,10 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import morgan from "morgan";
-import authRoutes from "./routes/authRoutes.js";
-import categoryRoutes from "./routes/categoryRoutes.js";
-import usersRoutes from "./routes/usersRoutes.js";
-import productsRoutes from "./routes/productRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 import cors from "cors";
 import bodyParser from "body-parser";
 dotenv.config();
@@ -31,7 +28,4 @@ const port = process.env.PORT || 8080;
 app.listen(port, () => console.log(`App running on ${port}`));
 
 //routes
-app.use("/api/v1/auth", authRoutes);
-app.use("/api/v1", categoryRoutes);
-app.use("/api/v1", usersRoutes);
-app.use("/api/v1", productsRoutes);
+app.use("/api/v1/admin", adminRoutes);
