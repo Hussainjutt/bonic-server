@@ -4,7 +4,9 @@ import {
   loginController,
   verifyLoginController,
   resetPasswordController,
+  profileContoller,
 } from "../controllers/admin/auth.js";
+import { tokenValidate } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
@@ -19,5 +21,8 @@ router.post("/forgot-password", fogotPasswordController);
 
 //FORGOT PASSWORD VERIFY || POST
 router.post("/reset-password", resetPasswordController);
+
+//Profile || GET
+router.get("/profile", tokenValidate, profileContoller);
 
 export default router;

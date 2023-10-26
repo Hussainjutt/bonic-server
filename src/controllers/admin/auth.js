@@ -71,7 +71,8 @@ export const verifyLoginController = async (req, res) => {
       last_name: user.last_name,
       email: user.email,
       role: user.role,
-      token: newtoken,
+      profile_pic: user.profile_pic,
+      token: `${user._id}+${newtoken}`,
     };
     sendSuccessResponse(res, 200, data, "Login successfully");
   } catch (error) {
@@ -140,6 +141,37 @@ export const resetPasswordController = async (req, res) => {
     user.confirmation_pin = null;
     await user.save();
     sendSuccessResponse(res, 200, {}, "Password reset successfully");
+  } catch (error) {
+    appErrorResponse(res, error);
+  }
+};
+
+export const profileContoller = async (req, res) => {
+  try {
+    const { id } = req.body;
+    if (isEmpty([id])) {
+      return missingFeilds(res);
+    }
+    const user = await adminModal.findOne({ _id: id });
+    if (!user) {
+      return sendErrorResponse(res, 400, "User not found");
+    }
+    const data = {
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email,
+      role: user.role,
+      profile_pic: user.profile_pic,
+      token: `${user._id}.${user.token}`,
+    };
+    sendSuccessResponse(
+      res,
+      200,
+      {
+        ...data,
+      },
+      "Profile Fetched succussfully"
+    );
   } catch (error) {
     appErrorResponse(res, error);
   }

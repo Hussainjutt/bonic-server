@@ -1,28 +1,35 @@
 import JWT from "jsonwebtoken";
-import userModel from "../models/userModel.js";
+import adminModal from "../models/adminModal.js";
+import { appErrorResponse, sendErrorResponse } from "../utils/response.js";
 
 //Check Token
 export const tokenValidate = async (req, res, next) => {
   try {
     const authorizationHeader = req.headers.authorization;
     const [userId, token] = authorizationHeader.split("+");
-    if (userId) {
-      const user = await userModel.findOne({ _id: userId });
-      if (!user) {
-        throw new Error("Using Invalid Id");
-      } else if (user?.verified === false) {
-        throw new Error("You blocked by the admin try again later");
-      }
+    if (!userId || !token) {
+      return sendErrorResponse(res, 498, "Invalid token");
     }
-    const decode = JWT.verify(token, process.env.JWT_SECRET);
-    req.user = decode;
+    const user = await adminModal.findOne({ _id: userId });
+    if (!user) {
+      return sendErrorResponse(res, 401, "Invalid token");
+    }
+    const decode = JWT.decode(token, process.env.JWT_SECRET);
+    if (
+      !decode?.email ||
+      !decode.exp ||
+      !decode.exp ||
+      user.email !== decode?.email
+    ) {
+      return sendErrorResponse(res, 498, "Invalid token");
+    }
+    const expired = decode.exp && decode.exp <= Math.floor(Date.now() / 1000);
+    if (expired) {
+      return sendErrorResponse(res, 401, "Token expired");
+    }
     next();
   } catch (error) {
-    res.status(401).send({
-      message:
-        error.message == "jwt expired" ? "Token expired" : error?.message,
-      success: false,
-    });
+    appErrorResponse(res, error);
   }
 };
 
