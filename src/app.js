@@ -1,31 +1,45 @@
+// server.js (Your main server file)
 import express from "express";
+import http from "http";
+import * as socketIo from "socket.io";
+import bodyParser from "body-parser";
+import cors from "cors";
+import morgan from "morgan";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
-import morgan from "morgan";
 import adminRoutes from "./routes/adminRoutes.js";
-import cors from "cors";
-import bodyParser from "body-parser";
-dotenv.config();
-//DB connections
-connectDB();
-//rest Object
-const app = express();
-app.get("/", (req, res) => {
-  res.send({
-    message: "hello from server",
-  });
-});
 
-//middleware
+dotenv.config();
+
+// DB connections
+connectDB();
+
+const app = express();
+const httpServer = http.createServer(app);
+const server = new socketIo.Server(httpServer, {
+  cors: {
+    origin: "*",
+  },
+});
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cors());
+app.use(
+  cors({
+    origin: "*",
+    credentials: true,
+  })
+);
+
 app.use(morgan("dev"));
-//Get the Port
+app.use("/api/v1/admin", adminRoutes);
 const port = process.env.PORT || 8080;
 
-//Listen funtiom
-app.listen(port, () => console.log(`App running on ${port}`));
+httpServer.listen(port, () => {
+  console.log(`App running on ${port}`);
+});
 
-//routes
-app.use("/api/v1/admin", adminRoutes);
+server.on("connection", (socket) => {
+  console.log("User connected");
+});
+
+export const io = server;

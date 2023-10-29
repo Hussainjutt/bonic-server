@@ -12,12 +12,12 @@ export function isEmpty(fields) {
 export const pinChecker = async (token, pin, modal, by) => {
   const decoded = Jwt.decode(token);
   if (!decoded?.[by]) {
-    return sendErrorResponse(res, 498, "Invalid token");
+    return sendErrorResponse(res, 401, "Invalid token");
   }
   const user = await modal.findOne({ email: decoded?.[by] });
   const expired = decoded.exp && decoded.exp <= Math.floor(Date.now() / 1000);
   if (!user) {
-    return { code: 498, msg: "Invalid token" };
+    return { code: 401, msg: "Invalid token" };
   }
   if (expired) {
     return { code: 401, msg: "Token expired" };

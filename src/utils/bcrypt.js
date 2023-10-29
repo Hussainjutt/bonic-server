@@ -10,7 +10,7 @@ export const hashPassword = async (password) => {
   }
 };
 
-export const camparePassword = async (password, hashedPassword) => {
+export const comparePassword = async (password, hashedPassword) => {
   try {
     if (!password || !hashedPassword) {
       return null;

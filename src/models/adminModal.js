@@ -14,6 +14,7 @@ const AdminModal = new mongoose.Schema(
     },
     profile_pic: {
       type: String,
+      default: null,
     },
     email: {
       type: String,
@@ -23,32 +24,56 @@ const AdminModal = new mongoose.Schema(
     password: {
       type: String,
       require: true,
+      default: "",
     },
     phone: {
       type: String,
       require: true,
+      trim: true,
+      default: "",
     },
     address: {
       type: String,
       require: true,
+      default: "",
     },
     role: {
       type: String,
       require: true,
+      default: "",
     },
     verified: {
       type: Boolean,
       require: true,
+      default: false,
+    },
+    is_active: {
+      type: Boolean,
+      require: true,
+      default: true,
     },
     token: {
       type: String,
       require: true,
+      default: "",
     },
     confirmation_pin: {
       type: String,
+      default: "",
     },
     remember_me: {
       type: Boolean,
+      default: false,
+    },
+    cnic_front: {
+      type: String,
+      require: true,
+      default: "",
+    },
+    cnic_back: {
+      type: String,
+      require: true,
+      default: "",
     },
   },
   { timestamps: true }

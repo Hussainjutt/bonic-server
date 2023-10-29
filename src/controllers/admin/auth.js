@@ -1,6 +1,6 @@
 import { generatePin } from "../../helpers/formatter.js";
 import adminModal from "../../models/adminModal.js";
-import { camparePassword, hashPassword } from "../../utils/bcrypt.js";
+import { comparePassword, hashPassword } from "../../utils/bcrypt.js";
 import { sendPinConfirmation } from "../../utils/email.js";
 import { isEmpty } from "../../utils/fields.js";
 import { JwtSign } from "../../utils/jwtToken.js";
@@ -11,6 +11,7 @@ import {
   sendSuccessResponse,
 } from "../../utils/response.js";
 import Jwt from "jsonwebtoken";
+
 export const loginController = async (req, res) => {
   try {
     const { email, password, remember_me } = req.body;
@@ -18,7 +19,7 @@ export const loginController = async (req, res) => {
       return missingFeilds(res);
     }
     const user = await adminModal.findOne({ email });
-    const check = await camparePassword(password, user?.password);
+    const check = await comparePassword(password, user?.password);
     if (!user || !check) {
       return sendErrorResponse(res, 400, "Incorrect email or password");
     }
@@ -49,12 +50,12 @@ export const verifyLoginController = async (req, res) => {
     }
     const decoded = Jwt.decode(token);
     if (!decoded?.email) {
-      return sendErrorResponse(res, 498, "Invalid token");
+      return sendErrorResponse(res, 401, "Invalid token");
     }
     const user = await adminModal.findOne({ email: decoded?.email });
     const expired = decoded.exp && decoded.exp <= Math.floor(Date.now() / 1000);
     if (!user) {
-      return sendErrorResponse(res, 498, "Invalid token");
+      return sendErrorResponse(res, 401, "Invalid token");
     }
     if (expired) {
       return sendErrorResponse(res, 401, "Token expired");
@@ -65,13 +66,14 @@ export const verifyLoginController = async (req, res) => {
     const newtoken = await JwtSign(user.email, user.remember_me);
     user.confirmation_pin = null;
     user.token = newtoken;
-    user.save();
+    await user.save();
     const data = {
       first_name: user.first_name,
       last_name: user.last_name,
       email: user.email,
       role: user.role,
       profile_pic: user.profile_pic,
+      verified: user.verified,
       token: `${user._id}+${newtoken}`,
     };
     sendSuccessResponse(res, 200, data, "Login successfully");
@@ -88,7 +90,10 @@ export const fogotPasswordController = async (req, res) => {
     }
     const user = await adminModal.findOne({ email });
     if (!user) {
-      sendErrorResponse(res, 400, "Invalid email address");
+      return sendErrorResponse(res, 400, "Invalid email address");
+    }
+    if (!user.password) {
+      return sendErrorResponse(res, 400, "Please first create your password");
     }
     const token = Jwt.sign({ _id: user?._id }, process.env.JWT_SECRET, {
       expiresIn: "10m",
@@ -116,12 +121,12 @@ export const resetPasswordController = async (req, res) => {
     }
     const decoded = Jwt.decode(token);
     if (!decoded?._id) {
-      return sendErrorResponse(res, 498, "Invalid token");
+      return sendErrorResponse(res, 401, "Invalid token");
     }
     const user = await adminModal.findOne({ _id: decoded?._id });
     const expired = decoded.exp && decoded.exp <= Math.floor(Date.now() / 1000);
     if (!user) {
-      return sendErrorResponse(res, 498, "Invalid token");
+      return sendErrorResponse(res, 401, "Invalid token");
     }
     if (expired) {
       return sendErrorResponse(res, 401, "Token expired");
@@ -129,7 +134,7 @@ export const resetPasswordController = async (req, res) => {
     if (pin !== user?.confirmation_pin) {
       return sendErrorResponse(res, 400, "Invalid Pin");
     }
-    const check = await camparePassword(password, user?.password);
+    const check = await comparePassword(password, user?.password);
     if (check) {
       return sendErrorResponse(
         res,
@@ -148,7 +153,7 @@ export const resetPasswordController = async (req, res) => {
 
 export const profileContoller = async (req, res) => {
   try {
-    const { id } = req.body;
+    const { id } = req.user;
     if (isEmpty([id])) {
       return missingFeilds(res);
     }
@@ -162,6 +167,7 @@ export const profileContoller = async (req, res) => {
       email: user.email,
       role: user.role,
       profile_pic: user.profile_pic,
+      verified: user.verified,
       token: `${user._id}.${user.token}`,
     };
     sendSuccessResponse(
@@ -174,5 +180,65 @@ export const profileContoller = async (req, res) => {
     );
   } catch (error) {
     appErrorResponse(res, error);
+  }
+};
+
+export const updateProfileController = async (req, res) => {
+  try {
+    const { first_name, last_name, profile_pic, phone, address } = req.body;
+    const { id } = req.user;
+    if (isEmpty([id, first_name, last_name, profile_pic, phone, address])) {
+      return missingFeilds(res);
+    }
+    const user = await adminModal.findOne({ _id: id });
+    if (!user) {
+      return sendErrorResponse(res, 400, "User not found");
+    }
+    user.first_name = first_name;
+    user.last_name = last_name;
+    user.profile_pic = profile_pic;
+    user.phone = phone;
+    user.address = address;
+    await user.save();
+    sendSuccessResponse(
+      res,
+      200,
+      {},
+      `${first_name} your Profile is updated successfully`
+    );
+  } catch (error) {
+    appErrorResponse(res, error);
+  }
+};
+
+export const updatePasswordController = async (req, res) => {
+  try {
+    const { password } = req.body;
+    const { id } = req.user;
+    if (isEmpty([password, id])) {
+      return missingFeilds(res);
+    }
+    const user = await adminModal.findOne({ _id: id });
+    if (!user) {
+      return sendErrorResponse(res, 400, "User not found");
+    }
+    const check = await comparePassword(password, user.password);
+    if (check) {
+      return sendErrorResponse(
+        res,
+        400,
+        "You have already used this password try a different one"
+      );
+    }
+    user.password = await hashPassword(password);
+    await user.save();
+    sendSuccessResponse(
+      res,
+      200,
+      {},
+      `${user.first_name} your password changed succussfully`
+    );
+  } catch (error) {
+    return appErrorResponse(res, error);
   }
 };
