@@ -8,7 +8,7 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import adminRoutes from "./routes/adminRoutes.js";
-
+import colors from "colors";
 dotenv.config();
 
 // DB connections
@@ -35,11 +35,11 @@ app.use("/api/v1/admin", adminRoutes);
 const port = process.env.PORT || 8080;
 
 httpServer.listen(port, () => {
-  console.log(`App running on ${port}`);
+  console.log(`App running on ${port}`.bgBrightCyan.white);
 });
 
 server.on("connection", (socket) => {
-  console.log("User connected");
+  console.log("User connected".green);
 });
 
 export const io = server;

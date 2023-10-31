@@ -14,9 +14,11 @@ import {
 import { isAdmin, tokenValidate } from "../middlewares/authMiddleware.js";
 import {
   addStaffController,
+  docsVerificationController,
   passwordCreateController,
   removeStaffController,
   resendPasswordEmailController,
+  verificationDocsUploadController,
 } from "../controllers/admin/staff.js";
 
 const router = express.Router();
@@ -31,7 +33,7 @@ router.post("/login-verify", verifyLoginController);
 router.post("/forgot-password", fogotPasswordController);
 
 // FORGOT PASSWORD VERIFY || POST
-router.post("/reset-password", resetPasswordController);
+router.put("/reset-password", resetPasswordController);
 
 // PROFILE || GET
 router.get("/profile", tokenValidate, profileContoller);
@@ -57,6 +59,20 @@ router.post(
 );
 
 //PASSWORD CREATION || POST
-router.post("/create-password", passwordCreateController);
+router.put("/create-password", passwordCreateController);
 
+//VERIFICATION DOCUMENTS UPLOAD || PUT
+router.put(
+  "/upload-verification-docs",
+  tokenValidate,
+  verificationDocsUploadController
+);
+
+//DOCS VERIFICATION || POST
+router.put(
+  "/docs-verification",
+  tokenValidate,
+  isAdmin,
+  docsVerificationController
+);
 export default router;

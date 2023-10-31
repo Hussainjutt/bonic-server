@@ -133,9 +133,36 @@ export const passwordCreateController = async (req, res) => {
   }
 };
 
+export const verificationDocsUploadController = async (req, res) => {
+  try {
+    const { cnic_front, cnic_back } = req.body;
+    const { id } = req.user;
+    if (isEmpty([cnic_front, cnic_back])) {
+      return missingFeilds(res);
+    }
+    const user = await adminModal.findOne({ _id: id });
+    if (!user) {
+      return sendErrorResponse(res, 400, "User not found");
+    }
+    user.cnic_front = cnic_front;
+    user.cnic_back = cnic_back;
+    await user.save();
+    await addNotification(
+      `${user.first_name} has uploaded his varification documents`,
+      "admins",
+      `/staff/${user._id}`
+    );
+    sendSuccessResponse(res, 200, {}, "Documents uploaded successfully");
+  } catch (error) {
+    appErrorResponse(res, error);
+  }
+};
+
 export const docsVerificationController = async (req, res) => {
   try {
     const { id, status } = req.body;
+    const adminID = req.user.id;
+    const admin = await adminModal.findOne({ _id: adminID });
     const user = await adminModal.findOne({ _id: id });
     if (!user) {
       return sendErrorResponse(res, 400, "User not found");
@@ -150,6 +177,16 @@ export const docsVerificationController = async (req, res) => {
     if (status === "approved") {
       user.verified = true;
       await user.save();
+      await addNotification(
+        `${admin.role} has approved your documents`,
+        user._id,
+        "/profile"
+      );
+      await addNotification(
+        `${admin.first_name} has approved ${user.first_name} documents`,
+        "admins",
+        `/staff/${user?._id}`
+      );
       return sendSuccessResponse(
         res,
         200,
@@ -157,6 +194,17 @@ export const docsVerificationController = async (req, res) => {
         `${user.first_name} has approved successfully`
       );
     } else if (status === "rejected") {
+      user.verified = false;
+      await addNotification(
+        `${admin.role} has rejected your document plz reupload them`,
+        user._id,
+        "/profile"
+      );
+      await addNotification(
+        `${admin.first_name} has rejected ${user.first_name} documents`,
+        user._id,
+        `/staff/${user?._id}`
+      );
       return sendSuccessResponse(
         res,
         200,

@@ -16,8 +16,9 @@ const connectDB = async () => {
       useUnifiedTopology: true,
     });
 
-    console.log("DB connected successfully");
+    console.log("DB connected successfully".bgBrightMagenta.white);
   } catch (error) {
+    console.error(error.message.bgBrightRed.white);
     connectDB();
   }
 };
