@@ -35,7 +35,7 @@ app.use("/api/v1/admin", adminRoutes);
 const port = process.env.PORT || 8080;
 
 httpServer.listen(port, () => {
-  console.log(`App running on ${port}`.bgBrightCyan.white);
+  console.log(`App running on ${port}`.bgCyan.red);
 });
 
 server.on("connection", (socket) => {

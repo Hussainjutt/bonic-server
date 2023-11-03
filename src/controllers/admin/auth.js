@@ -75,6 +75,8 @@ export const verifyLoginController = async (req, res) => {
       profile_pic: user.profile_pic,
       verified: user.verified,
       token: `${user._id}+${newtoken}`,
+      phone: user.phone,
+      address: user.address,
     };
     sendSuccessResponse(res, 200, data, "Login successfully");
   } catch (error) {
@@ -168,7 +170,9 @@ export const profileContoller = async (req, res) => {
       role: user.role,
       profile_pic: user.profile_pic,
       verified: user.verified,
-      token: `${user._id}.${user.token}`,
+      token: `${user._id}+${user.token}`,
+      phone: user.phone,
+      address: user.address,
     };
     sendSuccessResponse(
       res,
@@ -185,9 +189,9 @@ export const profileContoller = async (req, res) => {
 
 export const updateProfileController = async (req, res) => {
   try {
-    const { first_name, last_name, profile_pic, phone, address } = req.body;
+    const { first_name, last_name, phone, address } = req.body;
     const { id } = req.user;
-    if (isEmpty([id, first_name, last_name, profile_pic, phone, address])) {
+    if (isEmpty([id, first_name, last_name])) {
       return missingFeilds(res);
     }
     const user = await adminModal.findOne({ _id: id });
@@ -196,14 +200,24 @@ export const updateProfileController = async (req, res) => {
     }
     user.first_name = first_name;
     user.last_name = last_name;
-    user.profile_pic = profile_pic;
     user.phone = phone;
     user.address = address;
     await user.save();
+    const data = {
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email,
+      role: user.role,
+      profile_pic: user.profile_pic,
+      verified: user.verified,
+      token: `${user._id}+${user.token}`,
+      phone: user.phone,
+      address: user.address,
+    };
     sendSuccessResponse(
       res,
       200,
-      {},
+      data,
       `${first_name} your Profile is updated successfully`
     );
   } catch (error) {
