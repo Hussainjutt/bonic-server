@@ -9,36 +9,37 @@ export const tokenValidate = async (req, res, next) => {
     if (!authorizationHeader) {
       return sendErrorResponse(res, 401, "Invalid token");
     }
-    const [userId, token] = authorizationHeader?.split("+");
-    if (!userId || !token) {
+    const tokenData = authorizationHeader?.split(".");
+    if (!Array.isArray(tokenData) || tokenData.length !== 5) {
       return sendErrorResponse(res, 401, "Invalid token");
     }
-    const user = await adminModal.findOne({ _id: userId });
-    if (!user) {
-      return sendErrorResponse(res, 401, "Invalid token");
-    }
+
+    const [role, verified] = tokenData.slice(-2);
+    const token = tokenData.slice(0, -2).join(".");
     const decode = JWT.decode(token, process.env.JWT_SECRET);
-    if (
-      !decode?.email ||
-      !decode.exp ||
-      !decode.exp ||
-      user.email !== decode?.email
-    ) {
+    if (!decode?.id || !decode.exp) {
       return sendErrorResponse(res, 401, "Invalid token");
     }
     const expired = decode.exp && decode.exp <= Math.floor(Date.now() / 1000);
     if (expired) {
       return sendErrorResponse(res, 401, "Token expired");
     }
+    const user = await adminModal.findOne({ _id: decode?.id });
+    if (!user) {
+      return sendErrorResponse(res, 401, "Invalid token");
+    }
+    if (user.role !== role || user.verified !== Boolean(verified)) {
+      return sendErrorResponse(res, 401, "Unauthorized access");
+    }
     if (!user.is_active) {
       return sendErrorResponse(
         res,
-        403,
-        "Your account is blocked by the admin for some reason try again later"
+        451,
+        "Your account is blocked by the admin for some reason try again later 7"
       );
     }
     req.user = {
-      id: userId,
+      id: user?._id,
       token: token,
     };
     next();

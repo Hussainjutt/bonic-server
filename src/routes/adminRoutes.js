@@ -10,6 +10,7 @@ import {
   profileContoller,
   updateProfileController,
   updatePasswordController,
+  profilePicUpload,
 } from "../controllers/admin/auth.js";
 import { isAdmin, tokenValidate } from "../middlewares/authMiddleware.js";
 import {
@@ -20,9 +21,8 @@ import {
   resendPasswordEmailController,
   verificationDocsUploadController,
 } from "../controllers/admin/staff.js";
-
+import formidableMiddleware from "express-formidable";
 const router = express.Router();
-
 // LOGIN || POST
 router.post("/login", loginController);
 
@@ -40,7 +40,13 @@ router.get("/profile", tokenValidate, profileContoller);
 
 // UPDATE PROFILE || PUT
 router.put("/update-profile", tokenValidate, updateProfileController);
-
+// PROFILE PIC UPLOAD || PUT
+router.put(
+  "/profile-pic-upload",
+  tokenValidate,
+  formidableMiddleware(),
+  profilePicUpload
+);
 // UPDATE PASSWORD || PUT
 router.put("/update-password", tokenValidate, updatePasswordController);
 

@@ -1,5 +1,4 @@
-import { storage } from "../firebase/index.js";
-import { Storage } from "@google-cloud/storage";
+import { storage } from "../config/firebase.js";
 import { v4 as uuid } from "uuid";
 
 export async function uploadImage(imagePath, folder) {
@@ -8,7 +7,7 @@ export async function uploadImage(imagePath, folder) {
       throw new Error("Image and folder are required");
     }
     const bucket = storage.storage().bucket();
-    const fileName = uuid() + ".jpg"; // Generate a unique file name
+    const fileName = uuid() + ".jpg";
 
     await bucket.upload(imagePath, {
       destination: `${folder}/${fileName}`,
@@ -20,7 +19,7 @@ export async function uploadImage(imagePath, folder) {
     const file = bucket.file(`${folder}/${fileName}`);
     const config = {
       action: "read",
-      expires: "03-01-2500", // Replace with an appropriate expiration date
+      expires: "03-01-2500",
     };
     const [url] = await file.getSignedUrl(config);
 

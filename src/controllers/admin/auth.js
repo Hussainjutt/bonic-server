@@ -1,9 +1,9 @@
+import { removeImage, uploadImage } from "../../helpers/firbaseHelper.js";
 import { generatePin } from "../../helpers/formatter.js";
 import adminModal from "../../models/adminModal.js";
 import { comparePassword, hashPassword } from "../../utils/bcrypt.js";
 import { sendPinConfirmation } from "../../utils/email.js";
 import { isEmpty } from "../../utils/fields.js";
-import { JwtSign } from "../../utils/jwtToken.js";
 import {
   appErrorResponse,
   missingFeilds,
@@ -23,7 +23,7 @@ export const loginController = async (req, res) => {
     if (!user || !check) {
       return sendErrorResponse(res, 400, "Incorrect email or password");
     }
-    const token = Jwt.sign({ email: email }, process.env.JWT_SECRET, {
+    const token = Jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "10m",
     });
     const pin = generatePin(user?.confirmation_pin);
@@ -49,10 +49,10 @@ export const verifyLoginController = async (req, res) => {
       return missingFeilds(res);
     }
     const decoded = Jwt.decode(token);
-    if (!decoded?.email) {
+    if (!decoded?.id) {
       return sendErrorResponse(res, 401, "Invalid token");
     }
-    const user = await adminModal.findOne({ email: decoded?.email });
+    const user = await adminModal.findOne({ _id: decoded?.id });
     const expired = decoded.exp && decoded.exp <= Math.floor(Date.now() / 1000);
     if (!user) {
       return sendErrorResponse(res, 401, "Invalid token");
@@ -63,9 +63,11 @@ export const verifyLoginController = async (req, res) => {
     if (pin !== user?.confirmation_pin) {
       return sendErrorResponse(res, 400, "Invalid Pin");
     }
-    const newtoken = await JwtSign(user.email, user.remember_me);
+    const newtoken = await Jwt.sign({ id: user?._id }, process.env.JWT_SECRET, {
+      expiresIn: user?.remember_me ? "2d" : "1d",
+    });
     user.confirmation_pin = null;
-    user.token = newtoken;
+    user.token = `${newtoken}.${user?.role}.${user.verified}`;
     await user.save();
     const data = {
       first_name: user.first_name,
@@ -74,7 +76,7 @@ export const verifyLoginController = async (req, res) => {
       role: user.role,
       profile_pic: user.profile_pic,
       verified: user.verified,
-      token: `${user._id}+${newtoken}`,
+      token: user.token,
       phone: user.phone,
       address: user.address,
     };
@@ -170,7 +172,7 @@ export const profileContoller = async (req, res) => {
       role: user.role,
       profile_pic: user.profile_pic,
       verified: user.verified,
-      token: `${user._id}+${user.token}`,
+      token: user.token,
       phone: user.phone,
       address: user.address,
     };
@@ -203,21 +205,10 @@ export const updateProfileController = async (req, res) => {
     user.phone = phone;
     user.address = address;
     await user.save();
-    const data = {
-      first_name: user.first_name,
-      last_name: user.last_name,
-      email: user.email,
-      role: user.role,
-      profile_pic: user.profile_pic,
-      verified: user.verified,
-      token: `${user._id}+${user.token}`,
-      phone: user.phone,
-      address: user.address,
-    };
     sendSuccessResponse(
       res,
       200,
-      data,
+      {},
       `${first_name} your Profile is updated successfully`
     );
   } catch (error) {
@@ -227,24 +218,24 @@ export const updateProfileController = async (req, res) => {
 
 export const updatePasswordController = async (req, res) => {
   try {
-    const { password } = req.body;
+    const { current_password, new_password } = req.body;
     const { id } = req.user;
-    if (isEmpty([password, id])) {
+    if (isEmpty([current_password, new_password, id])) {
       return missingFeilds(res);
     }
     const user = await adminModal.findOne({ _id: id });
     if (!user) {
       return sendErrorResponse(res, 400, "User not found");
     }
-    const check = await comparePassword(password, user.password);
-    if (check) {
+    const check = await comparePassword(current_password, user.password);
+    if (!check) {
       return sendErrorResponse(
         res,
         400,
-        "You have already used this password try a different one"
+        "Please enter the valid current password"
       );
     }
-    user.password = await hashPassword(password);
+    user.password = await hashPassword(new_password);
     await user.save();
     sendSuccessResponse(
       res,
@@ -254,5 +245,33 @@ export const updatePasswordController = async (req, res) => {
     );
   } catch (error) {
     return appErrorResponse(res, error);
+  }
+};
+
+export const profilePicUpload = async (req, res) => {
+  try {
+    const { id } = req.user;
+    const { img } = req.files;
+    if (isEmpty([img])) {
+      return missingFeilds(res);
+    }
+    const user = await adminModal.findOne({ _id: id });
+    if (!img?.path) {
+      return sendErrorResponse(res, 400, "Invalid img");
+    }
+    if (user.profile_pic) {
+      await removeImage(user.profile_pic);
+    }
+    const imgUrl = await uploadImage(img?.path, "profiles");
+    user.profile_pic = imgUrl;
+    await user.save();
+    sendSuccessResponse(
+      res,
+      200,
+      {},
+      `${user.first_name} your profile pic uploaded successfully`
+    );
+  } catch (error) {
+    appErrorResponse(res, error);
   }
 };

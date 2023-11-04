@@ -18,7 +18,8 @@ export const sendSuccessResponse = (
   });
 };
 export const appErrorResponse = (res, err) => {
-  return sendErrorResponse(res, 500, err?.message ?? "Sever Error");
+  console.log("err", `${err}`.red);
+  return sendErrorResponse(res, 500, "Sever Error");
 };
 export const missingFeilds = (res) => {
   return sendErrorResponse(res, 400, "Some feilds are missings");
