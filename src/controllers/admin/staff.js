@@ -13,6 +13,89 @@ import {
 import { hashPassword } from "../../utils/bcrypt.js";
 import { addNotification } from "./notifications.js";
 
+export const staffListController = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      status = "all",
+      role = "all",
+    } = req.query;
+    const userId = req.user.id;
+
+    const query = {
+      $or: [
+        { name: { $regex: new RegExp(search, "i") } },
+        { email: { $regex: new RegExp(search, "i") } },
+      ],
+      _id: { $ne: userId },
+    };
+
+    if (status === "approved") {
+      query.verified = true;
+    } else if (status === "pending") {
+      query.verified = false;
+    } else if (status === "blocked") {
+      query.is_active = false;
+    }
+
+    if (role !== "all") {
+      query.role = role;
+    }
+
+    const selectFields = [
+      "first_name",
+      "last_name",
+      "verified",
+      "email",
+      "profile_pic",
+      "is_active",
+      "cnic_front",
+      "cnic_back",
+      "role",
+      "createdAt",
+    ];
+
+    const users = await adminModal
+      .find(query)
+      .select(selectFields)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+      .exec();
+
+    const totalUsers = await adminModal.countDocuments(query);
+    const totalPages = Math.ceil(totalUsers / limit);
+    const nextPage = page < totalPages ? +page + 1 : null;
+    const prevPage = page > 1 ? +page - 1 : null;
+
+    const usersWithGotMail = users.map((user) => {
+      const obj = user.toObject();
+      delete obj["password"];
+      return {
+        ...obj,
+        got_mail: !!user.password,
+      };
+    });
+
+    sendSuccessResponse(
+      res,
+      200,
+      {
+        data: usersWithGotMail,
+        totalPages,
+        nextPage,
+        prevPage,
+        currentPage: Number(page),
+      },
+      "Staff fetched successfully"
+    );
+  } catch (err) {
+    appErrorResponse(res, err);
+  }
+};
+
 export const addStaffController = async (req, res) => {
   try {
     const { first_name, last_name, email, role } = req.body;

@@ -19,6 +19,7 @@ import {
   passwordCreateController,
   removeStaffController,
   resendPasswordEmailController,
+  staffListController,
   verificationDocsUploadController,
 } from "../controllers/admin/staff.js";
 import formidableMiddleware from "express-formidable";
@@ -50,6 +51,8 @@ router.put(
 // UPDATE PASSWORD || PUT
 router.put("/update-password", tokenValidate, updatePasswordController);
 
+// STAFF LIST || GET
+router.get("/staff-list", tokenValidate, isAdmin, staffListController);
 // Add-Staff || POST
 router.post("/add-staff", tokenValidate, isAdmin, addStaffController);
 
