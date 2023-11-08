@@ -25,6 +25,7 @@ import {
   resendPasswordEmailController,
   staffListController,
   verificationDocsUploadController,
+  staffDetailsController,
 } from "../controllers/admin/staff.js";
 import formidableMiddleware from "express-formidable";
 const router = express.Router();
@@ -57,8 +58,12 @@ router.put("/update-password", tokenValidate, updatePasswordController);
 
 // STAFF LIST || GET
 router.get("/staff-list", tokenValidate, isAdmin, staffListController);
+
 // Add-Staff || POST
 router.post("/add-staff", tokenValidate, isAdmin, addStaffController);
+
+// STAFF DETAILS || GET
+router.get("/staff/:id", tokenValidate, isAdmin, staffDetailsController);
 
 //REMOVE STAFF || DELETE
 router.delete("/remove-staff", tokenValidate, isAdmin, removeStaffController);

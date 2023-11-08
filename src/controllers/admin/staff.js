@@ -1,6 +1,6 @@
 // import { io } from "../../app.js";
 import Jwt from "jsonwebtoken";
-import { io } from "../../app.js";
+// import { io } from "../../app.js";
 import adminModal from "../../models/adminModal.js";
 import { createPasswword } from "../../utils/email.js";
 import { isEmpty } from "../../utils/fields.js";
@@ -12,7 +12,7 @@ import {
 } from "../../utils/response.js";
 import { hashPassword } from "../../utils/bcrypt.js";
 import { addNotification } from "./notifications.js";
-import {uploadImage} from "../../helpers/firbaseHelper.js"
+import { uploadImage } from "../../helpers/firbaseHelper.js";
 
 export const staffListController = async (req, res) => {
   try {
@@ -236,8 +236,8 @@ export const verificationDocsUploadController = async (req, res) => {
     if (!user) {
       return sendErrorResponse(res, 400, "User not found");
     }
-    user.cnic_front = await uploadImage(cnic_front.path,"documents");
-    user.cnic_back = await uploadImage(cnic_back.path,"documents");
+    user.cnic_front = await uploadImage(cnic_front.path, "documents");
+    user.cnic_back = await uploadImage(cnic_back.path, "documents");
     await user.save();
     await addNotification(
       `${user.first_name} has uploaded his varification documents`,
@@ -303,6 +303,29 @@ export const docsVerificationController = async (req, res) => {
         `${user.first_name} has rejected successfully`
       );
     }
+  } catch (error) {
+    appErrorResponse(res, error);
+  }
+};
+
+export const staffDetailsController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (isEmpty([id])) {
+      return missingFeilds(res);
+    }
+    const user = await adminModal.findOne({ _id: id });
+    const data = {
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email,
+      profile_pic: user.profile_pic,
+      verified: user.verified,
+      is_active: user.is_active,
+      cnic_front: user.cnic_front,
+      cnic_back: user.cnic_back,
+    };
+    sendSuccessResponse(res, 200, data, "Staff detailed fetched successfully");
   } catch (error) {
     appErrorResponse(res, error);
   }
