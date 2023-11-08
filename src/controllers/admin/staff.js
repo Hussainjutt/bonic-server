@@ -12,6 +12,7 @@ import {
 } from "../../utils/response.js";
 import { hashPassword } from "../../utils/bcrypt.js";
 import { addNotification } from "./notifications.js";
+import {uploadImage} from "../../helpers/firbaseHelper.js"
 
 export const staffListController = async (req, res) => {
   try {
@@ -235,8 +236,8 @@ export const verificationDocsUploadController = async (req, res) => {
     if (!user) {
       return sendErrorResponse(res, 400, "User not found");
     }
-    user.cnic_front = cnic_front;
-    user.cnic_back = cnic_back;
+    user.cnic_front = await uploadImage(cnic_front.path,"documents");
+    user.cnic_back = await uploadImage(cnic_back.path,"documents");
     await user.save();
     await addNotification(
       `${user.first_name} has uploaded his varification documents`,

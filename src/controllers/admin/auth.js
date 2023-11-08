@@ -79,6 +79,8 @@ export const verifyLoginController = async (req, res) => {
       token: user.token,
       phone: user.phone,
       address: user.address,
+      cnic_front:user?.cnic_front??"",
+      cnic_back:user?.cnic_back??"",
     };
     sendSuccessResponse(res, 200, data, "Login successfully");
   } catch (error) {
@@ -175,6 +177,8 @@ export const profileContoller = async (req, res) => {
       token: user.token,
       phone: user.phone,
       address: user.address,
+      cnic_front:user?.cnic_front??"",
+      cnic_back:user?.cnic_back??"",
     };
     sendSuccessResponse(
       res,
