@@ -28,7 +28,10 @@ export const tokenValidate = async (req, res, next) => {
     if (!user) {
       return sendErrorResponse(res, 401, "Invalid token");
     }
-    if (user.role !== role || user.verified !== Boolean(verified)) {
+    if (
+      user.role !== role ||
+      user.verified !== Boolean(JSON.parse(verified.toLowerCase()))
+    ) {
       return sendErrorResponse(res, 401, "Unauthorized access");
     }
     if (!user.is_active) {

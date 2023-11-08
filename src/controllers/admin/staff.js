@@ -160,6 +160,7 @@ export const removeStaffController = async (req, res) => {
     appErrorResponse(res, error);
   }
 };
+
 export const resendPasswordEmailController = async (req, res) => {
   try {
     const { id } = req.body;
@@ -208,6 +209,13 @@ export const passwordCreateController = async (req, res) => {
     if (expired) {
       return sendErrorResponse(res, 401, "Token expired");
     }
+    if (user.password) {
+      return sendErrorResponse(
+        res,
+        400,
+        "You've already craeted your password"
+      );
+    }
     user.password = await hashPassword(password);
     user.save();
     sendSuccessResponse(res, 200, {}, "Password created successfully");
@@ -218,7 +226,7 @@ export const passwordCreateController = async (req, res) => {
 
 export const verificationDocsUploadController = async (req, res) => {
   try {
-    const { cnic_front, cnic_back } = req.body;
+    const { cnic_front, cnic_back } = req.files;
     const { id } = req.user;
     if (isEmpty([cnic_front, cnic_back])) {
       return missingFeilds(res);

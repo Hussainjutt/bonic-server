@@ -12,7 +12,11 @@ import {
   updatePasswordController,
   profilePicUpload,
 } from "../controllers/admin/auth.js";
-import { isAdmin, tokenValidate } from "../middlewares/authMiddleware.js";
+import {
+  isAdmin,
+  isManager,
+  tokenValidate,
+} from "../middlewares/authMiddleware.js";
 import {
   addStaffController,
   docsVerificationController,
@@ -74,6 +78,9 @@ router.put("/create-password", passwordCreateController);
 router.put(
   "/upload-verification-docs",
   tokenValidate,
+  isAdmin,
+  isManager,
+  formidableMiddleware(),
   verificationDocsUploadController
 );
 
