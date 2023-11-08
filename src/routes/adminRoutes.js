@@ -75,7 +75,7 @@ router.post(
 router.put("/create-password", passwordCreateController);
 
 //VERIFICATION DOCUMENTS UPLOAD || PUT
-router.post(
+router.put(
   "/upload-verification-docs",
   tokenValidate,
   formidableMiddleware(),
