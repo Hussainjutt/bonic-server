@@ -1,4 +1,3 @@
-// server.js (Your main server file)
 import express from "express";
 import http from "http";
 import * as socketIo from "socket.io";
@@ -6,9 +5,10 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import morgan from "morgan";
 import dotenv from "dotenv";
-import connectDB from "./config/db.js";
-import adminRoutes from "./routes/adminRoutes.js";
-import colors from "colors";
+import connectDB from "./config/db.ts";
+import adminRoutes from "./routes/adminRoutes.ts";
+import notificationsRoutes from "./routes/notificationRoutes.ts";
+
 dotenv.config();
 
 // DB connections
@@ -16,11 +16,22 @@ connectDB();
 
 const app = express();
 const httpServer = http.createServer(app);
-const server = new socketIo.Server(httpServer, {
+const io = new socketIo.Server(httpServer, {
   cors: {
     origin: "*",
   },
 });
+
+// Socket connection setup
+io.on("connection", (socket) => {
+  console.log("User connected successfully");
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected");
+  });
+});
+
+// Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
@@ -29,17 +40,17 @@ app.use(
     credentials: true,
   })
 );
-
 app.use(morgan("dev"));
+
+// Routes
 app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/admin", notificationsRoutes);
+
+// Start server
 const port = process.env.PORT || 8080;
 
 httpServer.listen(port, () => {
-  console.log(`App running on ${port}`.bgCyan.red);
+  console.log(`App running on ${port}`);
 });
 
-server.on("connection", (socket) => {
-  console.log("User connected".green);
-});
-
-export const io = server;
+export { io };

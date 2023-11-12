@@ -1,29 +1,30 @@
-import { removeImage, uploadImage } from "../../helpers/firbaseHelper.js";
-import { generatePin } from "../../helpers/formatter.js";
-import adminModal from "../../models/adminModal.js";
-import { comparePassword, hashPassword } from "../../utils/bcrypt.js";
-import { sendPinConfirmation } from "../../utils/email.js";
-import { isEmpty } from "../../utils/fields.js";
+import { removeImage, uploadImage } from "../../helpers/firbaseHelper.ts";
+import { generatePin } from "../../helpers/formatter.ts";
+import adminModal from "../../models/adminModal.ts";
+import { Request, Response } from "express";
+import { comparePassword, hashPassword } from "../../utils/bcrypt.ts";
+import { sendPinConfirmation } from "../../utils/email.ts";
+import { isEmpty } from "../../utils/fields.ts";
 import {
   appErrorResponse,
   missingFeilds,
   sendErrorResponse,
   sendSuccessResponse,
-} from "../../utils/response.js";
+} from "../../utils/response.ts";
 import Jwt from "jsonwebtoken";
 
-export const loginController = async (req, res) => {
+export const loginController = async (req: Request, res: Response) => {
   try {
     const { email, password, remember_me } = req.body;
     if (isEmpty([email, password])) {
       return missingFeilds(res);
     }
     const user = await adminModal.findOne({ email });
-    const check = await comparePassword(password, user?.password);
+    const check = await comparePassword(password, user?.password || "");
     if (!user || !check) {
       return sendErrorResponse(res, 400, "Incorrect email or password");
     }
-    const token = Jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const token = Jwt.sign({ id: user._id }, (process as any).env.JWT_SECRET, {
       expiresIn: "10m",
     });
     const pin = generatePin(user?.confirmation_pin);
@@ -42,13 +43,13 @@ export const loginController = async (req, res) => {
   }
 };
 
-export const verifyLoginController = async (req, res) => {
+export const verifyLoginController = async (req: Request, res: Response) => {
   try {
     const { token, pin } = req?.body;
     if (isEmpty([token, pin])) {
       return missingFeilds(res);
     }
-    const decoded = Jwt.decode(token);
+    const decoded: any = Jwt.decode(token);
     if (!decoded?.id) {
       return sendErrorResponse(res, 401, "Invalid token");
     }
@@ -63,10 +64,14 @@ export const verifyLoginController = async (req, res) => {
     if (pin !== user?.confirmation_pin) {
       return sendErrorResponse(res, 400, "Invalid Pin");
     }
-    const newtoken = await Jwt.sign({ id: user?._id }, process.env.JWT_SECRET, {
-      expiresIn: user?.remember_me ? "2d" : "1d",
-    });
-    user.confirmation_pin = null;
+    const newtoken = await Jwt.sign(
+      { id: user?._id },
+      (process as any).env.JWT_SECRET,
+      {
+        expiresIn: user?.remember_me ? "2d" : "1d",
+      }
+    );
+    user.confirmation_pin = "";
     user.token = `${newtoken}.${user?.role}.${user.verified}`;
     await user.save();
     const data = {
@@ -79,8 +84,8 @@ export const verifyLoginController = async (req, res) => {
       token: user.token,
       phone: user.phone,
       address: user.address,
-      cnic_front:user?.cnic_front??"",
-      cnic_back:user?.cnic_back??"",
+      cnic_front: user?.cnic_front ?? "",
+      cnic_back: user?.cnic_back ?? "",
     };
     sendSuccessResponse(res, 200, data, "Login successfully");
   } catch (error) {
@@ -88,7 +93,7 @@ export const verifyLoginController = async (req, res) => {
   }
 };
 
-export const fogotPasswordController = async (req, res) => {
+export const fogotPasswordController = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
     if (isEmpty([email])) {
@@ -101,10 +106,14 @@ export const fogotPasswordController = async (req, res) => {
     if (!user.password) {
       return sendErrorResponse(res, 400, "Please first create your password");
     }
-    const token = Jwt.sign({ _id: user?._id }, process.env.JWT_SECRET, {
-      expiresIn: "10m",
-    });
-    const pin = generatePin(user?.confirmation_pin);
+    const token = Jwt.sign(
+      { _id: user?._id },
+      (process as any).env.JWT_SECRET,
+      {
+        expiresIn: "10m",
+      }
+    );
+    const pin = generatePin(user?.confirmation_pin).toString();
     await sendPinConfirmation(email, pin);
     user.confirmation_pin = pin;
     await user.save();
@@ -119,13 +128,13 @@ export const fogotPasswordController = async (req, res) => {
   }
 };
 
-export const resetPasswordController = async (req, res) => {
+export const resetPasswordController = async (req: Request, res: Response) => {
   try {
     const { token, pin, password } = req.body;
     if (isEmpty([pin, password])) {
       return missingFeilds(res);
     }
-    const decoded = Jwt.decode(token);
+    const decoded: any = Jwt.decode(token);
     if (!decoded?._id) {
       return sendErrorResponse(res, 401, "Invalid token");
     }
@@ -149,7 +158,7 @@ export const resetPasswordController = async (req, res) => {
       );
     }
     user.password = await hashPassword(password);
-    user.confirmation_pin = null;
+    user.confirmation_pin = "";
     await user.save();
     sendSuccessResponse(res, 200, {}, "Password reset successfully");
   } catch (error) {
@@ -157,9 +166,9 @@ export const resetPasswordController = async (req, res) => {
   }
 };
 
-export const profileContoller = async (req, res) => {
+export const profileContoller = async (req: Request, res: Response) => {
   try {
-    const { id } = req.user;
+    const { id } = (req as any).user;
     if (isEmpty([id])) {
       return missingFeilds(res);
     }
@@ -177,8 +186,8 @@ export const profileContoller = async (req, res) => {
       token: user.token,
       phone: user.phone,
       address: user.address,
-      cnic_front:user?.cnic_front??"",
-      cnic_back:user?.cnic_back??"",
+      cnic_front: user?.cnic_front ?? "",
+      cnic_back: user?.cnic_back ?? "",
     };
     sendSuccessResponse(
       res,
@@ -193,10 +202,10 @@ export const profileContoller = async (req, res) => {
   }
 };
 
-export const updateProfileController = async (req, res) => {
+export const updateProfileController = async (req: Request, res: Response) => {
   try {
     const { first_name, last_name, phone, address } = req.body;
-    const { id } = req.user;
+    const { id } = (req as any).user;
     if (isEmpty([id, first_name, last_name])) {
       return missingFeilds(res);
     }
@@ -220,10 +229,10 @@ export const updateProfileController = async (req, res) => {
   }
 };
 
-export const updatePasswordController = async (req, res) => {
+export const updatePasswordController = async (req: Request, res: Response) => {
   try {
     const { current_password, new_password } = req.body;
-    const { id } = req.user;
+    const { id } = (req as any).user;
     if (isEmpty([current_password, new_password, id])) {
       return missingFeilds(res);
     }
@@ -252,10 +261,10 @@ export const updatePasswordController = async (req, res) => {
   }
 };
 
-export const profilePicUpload = async (req, res) => {
+export const profilePicUpload = async (req: Request, res: Response) => {
   try {
-    const { id } = req.user;
-    const { img } = req.files;
+    const { id } = (req as any).user;
+    const { img }: any = (req as any).files;
     if (isEmpty([img])) {
       return missingFeilds(res);
     }
@@ -263,17 +272,17 @@ export const profilePicUpload = async (req, res) => {
     if (!img?.path) {
       return sendErrorResponse(res, 400, "Invalid img");
     }
-    if (user.profile_pic) {
+    if (user?.profile_pic) {
       await removeImage(user.profile_pic);
     }
     const imgUrl = await uploadImage(img?.path, "profiles");
-    user.profile_pic = imgUrl;
-    await user.save();
+    (user as any).profile_pic = imgUrl;
+    await (user as any).save();
     sendSuccessResponse(
       res,
       200,
       {},
-      `${user.first_name} your profile pic uploaded successfully`
+      `${user?.first_name} your profile pic uploaded successfully`
     );
   } catch (error) {
     appErrorResponse(res, error);

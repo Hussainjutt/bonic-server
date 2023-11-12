@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-export const sendPinConfirmation = async (email, pin) => {
+export const sendPinConfirmation = async (email: string, pin: string) => {
   try {
     const transporter = nodemailer.createTransport({
       host: "smtp.elasticemail.com",
@@ -70,11 +70,15 @@ export const sendPinConfirmation = async (email, pin) => {
     };
     await transporter.sendMail(mailOptions);
   } catch (error) {
-    throw new Error(error?.message);
+    throw error;
   }
 };
 
-export const createPasswword = async (email, name, url) => {
+export const createPasswword = async (
+  email: string,
+  name: string,
+  url: string
+) => {
   try {
     const transporter = nodemailer.createTransport({
       host: "smtp.elasticemail.com",
@@ -87,7 +91,7 @@ export const createPasswword = async (email, name, url) => {
     const mailOptions = {
       from: "Hussain Ahmad www.hussainahmed2002@gmail.com",
       to: email,
-      subject: "Pin Verification",
+      subject: "Password Creation",
       html: `<!DOCTYPE html>
     <html xmlns="http://www.w3.org/1999/xhtml">
       <head>
@@ -586,6 +590,6 @@ export const createPasswword = async (email, name, url) => {
     };
     await transporter.sendMail(mailOptions);
   } catch (error) {
-    throw new Error(error?.message);
+    throw error;
   }
 };

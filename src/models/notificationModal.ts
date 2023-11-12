@@ -10,6 +10,10 @@ const notificationModal = new mongoose.Schema(
       type: String,
       require: true,
     },
+    doc: {
+      type: String,
+      require: true,
+    },
     url: {
       type: String,
       require: true,
@@ -23,4 +27,4 @@ const notificationModal = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model("admin-notifications", notificationModal);
+export default mongoose.model("notifications", notificationModal);

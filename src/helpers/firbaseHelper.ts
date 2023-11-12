@@ -1,7 +1,10 @@
-import { storage } from "../config/firebase.js";
+import { storage } from "../config/firebase.ts";
 import { v4 as uuid } from "uuid";
 
-export async function uploadImage(imagePath, folder) {
+export async function uploadImage(
+  imagePath: any,
+  folder: "documents" | "profiles"
+) {
   try {
     if (!imagePath || !folder) {
       throw new Error("Image and folder are required");
@@ -17,7 +20,7 @@ export async function uploadImage(imagePath, folder) {
     });
 
     const file = bucket.file(`${folder}/${fileName}`);
-    const config = {
+    const config: any = {
       action: "read",
       expires: "03-01-2500",
     };
@@ -28,7 +31,7 @@ export async function uploadImage(imagePath, folder) {
     throw error;
   }
 }
-export async function removeImage(url) {
+export async function removeImage(url: string) {
   try {
     const filePath = getFilePathFromURL(url);
     if (!filePath) {
@@ -42,7 +45,7 @@ export async function removeImage(url) {
     throw error;
   }
 }
-function getFilePathFromURL(url) {
+function getFilePathFromURL(url: any) {
   const regex = /https:\/\/storage\.googleapis\.com\/[^/]+\/(.+)\?.+/;
   const match = url.match(regex);
   return match ? match[1] : null;

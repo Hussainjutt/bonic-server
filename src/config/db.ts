@@ -14,12 +14,12 @@ const connectDB = async () => {
     await mongoose.connect(uri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-    });
+    } as any);
 
-    console.log("DB connected successfully".bgBrightMagenta.white);
+    console.log("DB connected successfully");
   } catch (error) {
-    console.error(error.message.bgBrightRed.white);
     connectDB();
+    throw error;
   }
 };
 

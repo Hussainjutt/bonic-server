@@ -1,9 +1,14 @@
 import JWT from "jsonwebtoken";
-import adminModal from "../models/adminModal.js";
-import { appErrorResponse, sendErrorResponse } from "../utils/response.js";
+import adminModal from "../models/adminModal.ts";
+import { appErrorResponse, sendErrorResponse } from "../utils/response.ts";
+import { Request, Response, NextFunction } from "express";
 
 //Check Token
-export const tokenValidate = async (req, res, next) => {
+export const tokenValidate = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const authorizationHeader = req.headers.authorization;
     if (!authorizationHeader) {
@@ -16,7 +21,7 @@ export const tokenValidate = async (req, res, next) => {
 
     const [role, verified] = tokenData.slice(-2);
     const token = tokenData.slice(0, -2).join(".");
-    const decode = JWT.decode(token, process.env.JWT_SECRET);
+    const decode: any = JWT.decode(token, (process as any).env.JWT_SECRET);
     if (!decode?.id || !decode.exp) {
       return sendErrorResponse(res, 401, "Invalid token");
     }
@@ -41,7 +46,7 @@ export const tokenValidate = async (req, res, next) => {
         "Your account is blocked by the admin for some reason try again later 7"
       );
     }
-    req.user = {
+    (req as any).user = {
       id: user?._id,
       token: token,
     };
@@ -52,9 +57,13 @@ export const tokenValidate = async (req, res, next) => {
 };
 
 //Admin validate
-export const isAdmin = async (req, res, next) => {
+export const isAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    const user = await adminModal.findOne({ _id: req.user.id });
+    const user = await adminModal.findOne({ _id: (req as any).user.id });
     if (user && (user.role === "super_admin" || user.role === "admin")) {
       next();
     } else {
@@ -66,9 +75,13 @@ export const isAdmin = async (req, res, next) => {
 };
 
 //Manager validate
-export const isManager = async (req, res, next) => {
+export const isManager = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    const user = await adminModal.findOne({ _id: req.user.id });
+    const user = await adminModal.findOne({ _id: (req as any).user.id });
     if (!user || user.role !== "manager") {
       return sendErrorResponse(res, 401, "Unauthorized access");
     }

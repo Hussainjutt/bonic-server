@@ -1,20 +1,20 @@
-// import { io } from "../../app.js";
 import Jwt from "jsonwebtoken";
-// import { io } from "../../app.js";
-import adminModal from "../../models/adminModal.js";
-import { createPasswword } from "../../utils/email.js";
-import { isEmpty } from "../../utils/fields.js";
+import { Request, Response } from "express";
+import adminModal from "../../models/adminModal.ts";
+import { createPasswword } from "../../utils/email.ts";
+import { isEmpty } from "../../utils/fields.ts";
 import {
   appErrorResponse,
   missingFeilds,
   sendErrorResponse,
   sendSuccessResponse,
-} from "../../utils/response.js";
-import { hashPassword } from "../../utils/bcrypt.js";
-import { addNotification } from "./notifications.js";
-import { uploadImage } from "../../helpers/firbaseHelper.js";
+} from "../../utils/response.ts";
+import { hashPassword } from "../../utils/bcrypt.ts";
+import { addNotificationController } from "./notifications.ts";
+import { removeImage, uploadImage } from "../../helpers/firbaseHelper.ts";
+import { OutputFileType } from "typescript";
 
-export const staffListController = async (req, res) => {
+export const staffListController = async (req: Request, res: Response) => {
   try {
     const {
       page = 1,
@@ -22,10 +22,10 @@ export const staffListController = async (req, res) => {
       search = "",
       status = "all",
       role = "all",
-    } = req.query;
-    const userId = req.user.id;
+    }: any = req.query;
+    const userId = (req as any).user.id;
 
-    const query = {
+    const query: any = {
       $or: [
         { name: { $regex: new RegExp(search, "i") } },
         { email: { $regex: new RegExp(search, "i") } },
@@ -71,20 +71,11 @@ export const staffListController = async (req, res) => {
     const nextPage = page < totalPages ? +page + 1 : null;
     const prevPage = page > 1 ? +page - 1 : null;
 
-    const usersWithGotMail = users.map((user) => {
-      const obj = user.toObject();
-      delete obj["password"];
-      return {
-        ...obj,
-        got_mail: !!user.password,
-      };
-    });
-
     sendSuccessResponse(
       res,
       200,
       {
-        data: usersWithGotMail,
+        data: users,
         totalPages,
         nextPage,
         prevPage,
@@ -97,10 +88,10 @@ export const staffListController = async (req, res) => {
   }
 };
 
-export const addStaffController = async (req, res) => {
+export const addStaffController = async (req: Request, res: Response) => {
   try {
     const { first_name, last_name, email, role } = req.body;
-    const { id } = req.user;
+    const { id } = (req as any).user;
     const admin = await adminModal.findOne({ _id: id });
     if (isEmpty([first_name, last_name, email, role])) {
       return missingFeilds(res);
@@ -109,7 +100,7 @@ export const addStaffController = async (req, res) => {
     if (check) {
       return sendErrorResponse(res, 400, "User already exits");
     }
-    const token = Jwt.sign({ email }, process.env.JWT_SECRET, {
+    const token = Jwt.sign({ email }, (process as any).env.JWT_SECRET, {
       expiresIn: "1h",
     });
     const url = `http://localhost:3000/create-password/${token}`;
@@ -122,11 +113,19 @@ export const addStaffController = async (req, res) => {
       verified: false,
     });
     await user.save();
-    await addNotification(
-      `${admin.first_name} has added ${first_name} as ${role}`,
-      "admins",
-      `/staff/${user._id}`
-    );
+    await addNotificationController({
+      message: `${admin?.first_name} has added ${first_name} as ${role}`,
+      doc: "staff",
+      url: `/staff/${user._id}`,
+      receiver: "staff",
+    });
+    await addNotificationController({
+      message: "Please upload your verification docs to be verified",
+      doc: "profile",
+      url: "/profile",
+      receiver: "specific",
+      id: user?._id,
+    });
     sendSuccessResponse(
       res,
       200,
@@ -138,7 +137,7 @@ export const addStaffController = async (req, res) => {
   }
 };
 
-export const removeStaffController = async (req, res) => {
+export const removeStaffController = async (req: Request, res: Response) => {
   try {
     const { id } = req.body;
     if (isEmpty(id)) {
@@ -162,7 +161,10 @@ export const removeStaffController = async (req, res) => {
   }
 };
 
-export const resendPasswordEmailController = async (req, res) => {
+export const resendPasswordEmailController = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const { id } = req.body;
     if (isEmpty([id])) {
@@ -175,12 +177,12 @@ export const resendPasswordEmailController = async (req, res) => {
     if (user.password) {
       return sendErrorResponse(res, 400, "User already created his password");
     }
-    const email = user.email;
-    const token = Jwt.sign({ email }, process.env.JWT_SECRET, {
+    const email = user.email || "";
+    const token = Jwt.sign({ email }, (process as any).env.JWT_SECRET, {
       expiresIn: "1h",
     });
     const url = `http://localhost:3000/create-password/${token}`;
-    await createPasswword(email, user.first_name, url);
+    await createPasswword(email, user?.first_name || "", url);
     sendSuccessResponse(
       res,
       200,
@@ -192,13 +194,13 @@ export const resendPasswordEmailController = async (req, res) => {
   }
 };
 
-export const passwordCreateController = async (req, res) => {
+export const passwordCreateController = async (req: Request, res: Response) => {
   try {
     const { token, password } = req.body;
     if (isEmpty([token, password])) {
-      return missingFeilds();
+      return missingFeilds(res);
     }
-    const decoded = Jwt.decode(token);
+    const decoded: any = Jwt.decode(token);
     if (!decoded?.email) {
       return sendErrorResponse(res, 401, "Invalid token");
     }
@@ -225,10 +227,13 @@ export const passwordCreateController = async (req, res) => {
   }
 };
 
-export const verificationDocsUploadController = async (req, res) => {
+export const verificationDocsUploadController = async (
+  req: Request,
+  res: Response
+) => {
   try {
-    const { cnic_front, cnic_back } = req.files;
-    const { id } = req.user;
+    const { cnic_front, cnic_back }: any = (req as any).files;
+    const { id } = (req as any).user;
     if (isEmpty([cnic_front, cnic_back])) {
       return missingFeilds(res);
     }
@@ -239,21 +244,28 @@ export const verificationDocsUploadController = async (req, res) => {
     user.cnic_front = await uploadImage(cnic_front.path, "documents");
     user.cnic_back = await uploadImage(cnic_back.path, "documents");
     await user.save();
-    await addNotification(
-      `${user.first_name} has uploaded his varification documents`,
-      "admins",
-      `/staff/${user._id}`
-    );
+    await addNotificationController({
+      message: `${user.first_name}  has uploaded his verification documents`,
+      doc: "staff",
+      receiver: "staff",
+      url: `/staff/${user._id}`,
+    });
     sendSuccessResponse(res, 200, {}, "Documents uploaded successfully");
   } catch (error) {
     appErrorResponse(res, error);
   }
 };
 
-export const docsVerificationController = async (req, res) => {
+export const docsVerificationController = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const { id, status } = req.body;
-    const adminID = req.user.id;
+    if (isEmpty([id, status])) {
+      return missingFeilds(res);
+    }
+    const adminID = (req as any).user.id;
     const admin = await adminModal.findOne({ _id: adminID });
     const user = await adminModal.findOne({ _id: id });
     if (!user) {
@@ -266,49 +278,68 @@ export const docsVerificationController = async (req, res) => {
         `${user.first_name} didn't upload all the verification documents so you can't do an action`
       );
     }
-    if (status === "approved") {
+    if (status === "approve") {
+      if (user.verified) {
+        return sendSuccessResponse(res, 200, {}, "User already approved");
+      }
       user.verified = true;
       await user.save();
-      await addNotification(
-        `${admin.role} has approved your documents`,
-        user._id,
-        "/profile"
-      );
-      await addNotification(
-        `${admin.first_name} has approved ${user.first_name} documents`,
-        "admins",
-        `/staff/${user?._id}`
-      );
+      await addNotificationController({
+        message: `Admin has approved your documents`,
+        doc: "profile",
+        receiver: "specific",
+        url: "/profile",
+        id: user._id,
+      });
+      await addNotificationController({
+        message: `${admin?.first_name} has approved ${user.first_name} documents`,
+        doc: "staff",
+        receiver: "staff",
+        url: `/staff/${user?._id}`,
+        id: user._id,
+      });
       return sendSuccessResponse(
         res,
         200,
         {},
-        `${user.first_name} has approved successfully`
+        `${user?.first_name} decuments has approved successfully`
       );
-    } else if (status === "rejected") {
+    } else if (status === "reject") {
+      await removeImage(user.cnic_front);
+      await removeImage(user.cnic_back);
       user.verified = false;
-      await addNotification(
-        `${admin.role} has rejected your document plz reupload them`,
-        user._id,
-        "/profile"
-      );
-      await addNotification(
-        `${admin.first_name} has rejected ${user.first_name} documents`,
-        user._id,
-        `/staff/${user?._id}`
-      );
+      user.cnic_back = "";
+      user.cnic_front = "";
+      user.save();
+      await addNotificationController({
+        message: `Admin has rejected your document plz reupload them`,
+        doc: "profile",
+        receiver: "specific",
+        url: "/profile",
+        id: user._id,
+      });
+      await addNotificationController({
+        message: `${admin?.first_name} has rejected ${user.first_name} documents`,
+        doc: "staff",
+        receiver: "staff",
+        url: `/staff/${user?._id}`,
+        id: user._id,
+      });
       return sendSuccessResponse(
         res,
         200,
-        `${user.first_name} has rejected successfully`
+        {},
+        `${user.first_name} decuments has rejected successfully`
       );
+    } else {
+      sendErrorResponse(res, 400, "Invalid status");
     }
   } catch (error) {
     appErrorResponse(res, error);
   }
 };
 
-export const staffDetailsController = async (req, res) => {
+export const staffDetailsController = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     if (isEmpty([id])) {
@@ -316,16 +347,64 @@ export const staffDetailsController = async (req, res) => {
     }
     const user = await adminModal.findOne({ _id: id });
     const data = {
-      first_name: user.first_name,
-      last_name: user.last_name,
-      email: user.email,
-      profile_pic: user.profile_pic,
-      verified: user.verified,
-      is_active: user.is_active,
-      cnic_front: user.cnic_front,
-      cnic_back: user.cnic_back,
+      id: user?._id,
+      first_name: user?.first_name,
+      last_name: user?.last_name,
+      email: user?.email,
+      profile_pic: user?.profile_pic,
+      verified: user?.verified,
+      is_active: user?.is_active,
+      cnic_front: user?.cnic_front,
+      cnic_back: user?.cnic_back,
+      role: user?.role,
+      address: user?.address,
+      phone: user?.phone,
     };
     sendSuccessResponse(res, 200, data, "Staff detailed fetched successfully");
+  } catch (error) {
+    appErrorResponse(res, error);
+  }
+};
+
+export const staffRoleChangeController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { id, role } = req.body;
+    const adminId = (req as any).user.id;
+    if (isEmpty([id, role])) {
+      return missingFeilds(res);
+    }
+    const admin = await adminModal.findOne({ _id: adminId });
+    const user = await adminModal.findOne({ _id: id });
+    if (!user) {
+      return sendErrorResponse(res, 400, "User not found");
+    }
+    if (!["manager", "admin"].includes(role)) {
+      return sendErrorResponse(res, 400, "Invalid role");
+    }
+    user.role = role;
+    await user.save();
+    await addNotificationController({
+      doc: "staff",
+      message: `${admin?.first_name} has updated the role of ${user.first_name} to ${role}`,
+      receiver: "staff",
+      url: `/staff/${user._id}`,
+    });
+    await addNotificationController({
+      doc: "profile",
+      message: `Admin has updated your role to ${role}`,
+      receiver: "specific",
+      url: `/profile`,
+      id: user?._id,
+    });
+    sendSuccessResponse(
+      res,
+      200,
+      {},
+      `${user?.first_name} role changed to ${role}`
+    );
   } catch (error) {
     appErrorResponse(res, error);
   }

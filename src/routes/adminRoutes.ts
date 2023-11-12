@@ -1,5 +1,5 @@
-// adminRoutes.js
-import express from "express";
+// adminRoutes.ts
+import * as express from "express";
 
 // Import necessary functions/controllers
 import {
@@ -11,12 +11,12 @@ import {
   updateProfileController,
   updatePasswordController,
   profilePicUpload,
-} from "../controllers/admin/auth.js";
+} from "../controllers/admin/auth.ts";
 import {
   isAdmin,
   isManager,
   tokenValidate,
-} from "../middlewares/authMiddleware.js";
+} from "../middlewares/authMiddleware.ts";
 import {
   addStaffController,
   docsVerificationController,
@@ -26,7 +26,7 @@ import {
   staffListController,
   verificationDocsUploadController,
   staffDetailsController,
-} from "../controllers/admin/staff.js";
+} from "../controllers/admin/staff.ts";
 import formidableMiddleware from "express-formidable";
 const router = express.Router();
 // LOGIN || POST
@@ -88,7 +88,7 @@ router.put(
 );
 
 //DOCS VERIFICATION || POST
-router.put(
+router.post(
   "/docs-verification",
   tokenValidate,
   isAdmin,

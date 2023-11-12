@@ -1,9 +1,9 @@
-export function isImageUrl(inputString) {
+export function isImageUrl(inputString: string) {
   const imageExtensions = /\.(jpg|jpeg|png|gif|bmp|tiff|svg|webp)$/i;
   const urlPattern = /^https?:\/\//i;
   return imageExtensions.test(inputString) && urlPattern.test(inputString);
 }
-export function generatePin(userPin) {
+export function generatePin(userPin: any): string {
   const min = 1000;
   const max = 9999;
   let pin = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -13,5 +13,5 @@ export function generatePin(userPin) {
       pin = Math.floor(Math.random() * (max - min + 1)) + min;
     } while (existingPins.has(pin));
   }
-  return pin;
+  return pin?.toString();
 }
